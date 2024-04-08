@@ -1,24 +1,26 @@
-const axios = require('axios');
-const Document = require('./Document');
-require('dotenv').config();
+import axios from 'axios';
+import { Server } from 'socket.io';
+import Document from './Document';
+import dotenv from 'dotenv';
 
-const WEBSOCKET_PORT = process.env.WEBSOCKET_PORT || 3001;
+dotenv.config();
 
-const io = require('socket.io')(WEBSOCKET_PORT, {
+const WEBSOCKET_PORT: number = parseInt(process.env.WEBSOCKET_PORT || '3001', 10);
+
+const io = new Server(WEBSOCKET_PORT, {
     cors: {
         origin: '*',
-        method: ['GET', 'POST']
+        methods: ['GET', 'POST']
     }
 });
 
 io.on("connection", (socket) => {
-
     socket.on("get-document", async ({ userId, documentId }) => {
         try {
             // Perform authorization check here
             const headers = {
                 "Content-Type": "application/json",
-                "auth-token": userId,
+                "Authorization": userId,
             };
             const response = await axios.get(
                 `${process.env.API_URL}/api/document/id/${documentId}`,
@@ -46,7 +48,7 @@ io.on("connection", (socket) => {
                 if (hasPermission) {
                     const headers = {
                         "Content-Type": "application/json",
-                        "auth-token": userId,
+                        "Authorization": userId,
                     };
 
                     try {
@@ -66,9 +68,3 @@ io.on("connection", (socket) => {
         }
     });
 });
-
-async function checkUserPermission(userId, documentId) {
-    // Implement your permission checking logic here
-    // This function should return true if the user has permission to edit the document, false otherwise
-    // You may need to query your database or use other methods to check permissions
-}
